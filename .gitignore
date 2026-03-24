@@ -27,6 +27,10 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# ---- Local DB (MVP dev) ----
+*.db
+*.sqlite
+
 # ---- OS / Editor ----
 .DS_Store
 Thumbs.db

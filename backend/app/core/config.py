@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
     # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./job_automation.db"
+    DATABASE_URL: str = "sqlite:///./job_automation.db"
+    JWT_SECRET_KEY: str = "change_me_in_env"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # Redis / Celery
     REDIS_URL: str = "redis://localhost:6379/0"
