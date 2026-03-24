@@ -1,0 +1,86 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-job_automation}
+      POSTGRES_USER: ${POSTGRES_USER:-job_automation_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-job_automation_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-job_automation_user} -d ${POSTGRES_DB:-job_automation}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./job_automation.db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ..:/app
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.frontend
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://backend:8000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    volumes:
+      - ../frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+
+  worker:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.backend
+    command: python -m celery -A backend.app.workers.tasks worker --loglevel=info
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./job_automation.db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    volumes:
+      - ..:/app
+
+volumes:
+  postgres_data:
+  redis_data:
+  frontend_node_modules:
+
