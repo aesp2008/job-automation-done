@@ -10,14 +10,19 @@ settings = get_settings()
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+dev_default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+allow_origins = (
+    [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
+    if settings.BACKEND_CORS_ORIGINS
+    else dev_default_origins
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(users_router)
 
