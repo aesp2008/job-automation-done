@@ -27,6 +27,13 @@ export default function PreferencesPage() {
   const [jobTypesText, setJobTypesText] = useState("");
   const [message, setMessage] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeSummary, setResumeSummary] = useState<{
+    filename: string;
+    file_size_kb: number;
+    extension: string;
+    skills_detected: string[];
+    summary: string;
+  } | null>(null);
 
   useEffect(() => {
     const t = localStorage.getItem("access_token");
@@ -73,6 +80,7 @@ export default function PreferencesPage() {
     try {
       const result = await uploadResume(token, resumeFile);
       setMessage(`Resume uploaded: ${result.resume_path}`);
+      setResumeSummary(result.parsed_summary ?? null);
       setResumeFile(null);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Failed to upload resume");
@@ -106,6 +114,23 @@ export default function PreferencesPage() {
           >
             Upload Resume
           </button>
+          {resumeSummary ? (
+            <div className="rounded border p-3 text-sm text-zinc-600 dark:text-zinc-300">
+              <p>
+                <strong>Parsed file:</strong> {resumeSummary.filename} ({resumeSummary.file_size_kb} KB)
+              </p>
+              <p>
+                <strong>Extension:</strong> {resumeSummary.extension || "N/A"}
+              </p>
+              <p>
+                <strong>Detected skills:</strong>{" "}
+                {resumeSummary.skills_detected.length
+                  ? resumeSummary.skills_detected.join(", ")
+                  : "None detected"}
+              </p>
+              <p>{resumeSummary.summary}</p>
+            </div>
+          ) : null}
         </form>
 
         <form className="mt-6 space-y-3" onSubmit={onSave}>

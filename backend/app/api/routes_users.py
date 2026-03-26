@@ -13,6 +13,7 @@ from backend.app.core.security import (
 from backend.app.core.config import get_settings
 from backend.app.db.session import get_db
 from backend.app.models.user import User
+from backend.app.services.resume_parser import parse_resume_bytes
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -111,7 +112,7 @@ def upload_resume(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict[str, str]:
+) -> dict:
     uploads_root = Path(settings.UPLOADS_DIR)
     user_dir = uploads_root / str(current_user.id)
     user_dir.mkdir(parents=True, exist_ok=True)
@@ -120,9 +121,14 @@ def upload_resume(
     destination = user_dir / safe_filename
     file_bytes = file.file.read()
     destination.write_bytes(file_bytes)
+    parsed_summary = parse_resume_bytes(safe_filename, file_bytes)
 
     current_user.resume_path = str(destination.as_posix())
     db.add(current_user)
     db.commit()
-    return {"message": "Resume metadata saved", "resume_path": current_user.resume_path}
+    return {
+        "message": "Resume uploaded and parsed",
+        "resume_path": current_user.resume_path,
+        "parsed_summary": parsed_summary,
+    }
 

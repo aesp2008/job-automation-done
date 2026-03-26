@@ -103,7 +103,20 @@ export async function updateMyPreferences(
   return parseJsonOrThrow<UserPreferences>(res);
 }
 
-export async function uploadResume(token: string, file: File): Promise<{ message: string; resume_path: string }> {
+export async function uploadResume(
+  token: string,
+  file: File
+): Promise<{
+  message: string;
+  resume_path: string;
+  parsed_summary?: {
+    filename: string;
+    file_size_kb: number;
+    extension: string;
+    skills_detected: string[];
+    summary: string;
+  };
+}> {
   const backendUrl = getBackendUrl();
   const form = new FormData();
   form.append("file", file);
@@ -112,6 +125,16 @@ export async function uploadResume(token: string, file: File): Promise<{ message
     headers: { Authorization: `Bearer ${token}` },
     body: form,
   });
-  return parseJsonOrThrow<{ message: string; resume_path: string }>(res);
+  return parseJsonOrThrow<{
+    message: string;
+    resume_path: string;
+    parsed_summary?: {
+      filename: string;
+      file_size_kb: number;
+      extension: string;
+      skills_detected: string[];
+      summary: string;
+    };
+  }>(res);
 }
 
