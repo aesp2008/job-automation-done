@@ -1,3 +1,7 @@
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
@@ -20,8 +24,14 @@ def get_db():
 
 
 def init_db() -> None:
-    # Import models here so SQLAlchemy metadata is fully registered before create_all.
+    # Import models to ensure metadata is available for fallback behavior.
     from backend.app.models import application, job, user  # noqa: F401
 
-    Base.metadata.create_all(bind=engine)
+    alembic_ini = Path(__file__).resolve().parents[2] / "alembic.ini"
+    alembic_cfg = Config(str(alembic_ini))
+    try:
+        command.upgrade(alembic_cfg, "head")
+    except Exception:
+        # Safe fallback for environments where Alembic isn't initialized yet.
+        Base.metadata.create_all(bind=engine)
 
