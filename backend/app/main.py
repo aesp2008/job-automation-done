@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,7 +12,15 @@ from .db.session import init_db
 
 settings = get_settings()
 
-app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Initialize app resources at startup."""
+    init_db()
+    yield
+
+
+app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
 
 dev_default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 allow_origins = (
@@ -29,12 +39,6 @@ app.add_middleware(
 app.include_router(users_router)
 app.include_router(jobs_router)
 app.include_router(integrations_router)
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    """Initialize DB tables for the MVP."""
-    init_db()
 
 
 @app.get("/health", tags=["health"])
