@@ -29,6 +29,23 @@ export type UserPreferences = {
   aggressiveness: number;
 };
 
+export type JobMatch = {
+  id: number;
+  title: string;
+  company: string;
+  location: string | null;
+  score: number | null;
+  explanation: string | null;
+  source: string;
+};
+
+export type JobApplication = {
+  id: number;
+  job_id: number;
+  status: string;
+  provider: string;
+};
+
 export function getBackendUrl(): string {
   return process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
 }
@@ -136,5 +153,32 @@ export async function uploadResume(
       summary: string;
     };
   }>(res);
+}
+
+export async function discoverFakeJobs(token: string): Promise<{ created_jobs: number; total_fake_jobs: number }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/discover/fake`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{ created_jobs: number; total_fake_jobs: number }>(res);
+}
+
+export async function getJobMatches(token: string): Promise<JobMatch[]> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/matches`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return parseJsonOrThrow<JobMatch[]>(res);
+}
+
+export async function getApplications(token: string): Promise<JobApplication[]> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/applications`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return parseJsonOrThrow<JobApplication[]>(res);
 }
 

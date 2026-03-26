@@ -20,5 +20,8 @@ def get_db():
 
 
 def init_db() -> None:
+    # Import models here so SQLAlchemy metadata is fully registered before create_all.
+    from backend.app.models import application, job, user  # noqa: F401
+
     Base.metadata.create_all(bind=engine)
 
