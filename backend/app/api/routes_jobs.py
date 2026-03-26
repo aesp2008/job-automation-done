@@ -7,6 +7,7 @@ from backend.app.db.session import get_db
 from backend.app.models.application import JobApplication
 from backend.app.models.job import Job
 from backend.app.models.user import User
+from backend.app.services.matching import score_job_for_user
 
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -36,8 +37,6 @@ FAKE_JOBS = [
         "company": "Acme Tech",
         "location": "Pune",
         "description": "Build APIs with Python and FastAPI.",
-        "score": 0.89,
-        "explanation": "Matches backend Python experience and API focus.",
     },
     {
         "external_id": "fake-2",
@@ -45,8 +44,6 @@ FAKE_JOBS = [
         "company": "Orbit Labs",
         "location": "Remote",
         "description": "React + Python product development.",
-        "score": 0.81,
-        "explanation": "Strong overlap with React and backend stack.",
     },
 ]
 
@@ -58,10 +55,11 @@ def discover_fake_jobs(
 ) -> dict[str, int]:
     created_count = 0
     for item in FAKE_JOBS:
+        score, explanation = score_job_for_user(current_user, item)
         existing = db.query(Job).filter(Job.external_id == item["external_id"]).first()
         if existing:
-            existing.relevance_score = item["score"]
-            existing.relevance_explanation = item["explanation"]
+            existing.relevance_score = score
+            existing.relevance_explanation = explanation
             job = existing
         else:
             job = Job(
@@ -71,8 +69,8 @@ def discover_fake_jobs(
                 location=item["location"],
                 description=item["description"],
                 source="fake",
-                relevance_score=item["score"],
-                relevance_explanation=item["explanation"],
+                relevance_score=score,
+                relevance_explanation=explanation,
                 url=f"https://example.com/jobs/{item['external_id']}",
             )
             db.add(job)
