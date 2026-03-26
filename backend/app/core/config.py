@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change_me_in_env"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    UPLOADS_DIR: str = "uploads"
 
     # Redis / Celery
     REDIS_URL: str = "redis://localhost:6379/0"
