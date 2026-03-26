@@ -131,6 +131,13 @@ export default function DashboardPage() {
         >
           Preferences
         </button>
+        <button
+          className="mt-6 ml-2 rounded border px-4 py-2 text-sm"
+          onClick={() => router.push("/settings/connections")}
+          type="button"
+        >
+          Connections
+        </button>
       </main>
     </div>
   );

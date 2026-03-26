@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.routes_integrations import router as integrations_router
 from .api.routes_jobs import router as jobs_router
 from .api.routes_users import router as users_router
 from .core.config import get_settings
@@ -27,6 +28,7 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(jobs_router)
+app.include_router(integrations_router)
 
 
 @app.on_event("startup")

@@ -46,6 +46,13 @@ export type JobApplication = {
   provider: string;
 };
 
+export type ProviderStatus = {
+  provider: string;
+  connected: boolean;
+  mode: string;
+  details: string;
+};
+
 export function getBackendUrl(): string {
   return process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
 }
@@ -180,5 +187,14 @@ export async function getApplications(token: string): Promise<JobApplication[]> 
     cache: "no-store",
   });
   return parseJsonOrThrow<JobApplication[]>(res);
+}
+
+export async function getProviderStatuses(token: string): Promise<ProviderStatus[]> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return parseJsonOrThrow<ProviderStatus[]>(res);
 }
 
