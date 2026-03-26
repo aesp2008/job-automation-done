@@ -59,6 +59,13 @@ export default function DashboardPage() {
         >
           Logout
         </button>
+        <button
+          className="mt-6 ml-2 rounded border px-4 py-2 text-sm"
+          onClick={() => router.push("/settings/preferences")}
+          type="button"
+        >
+          Preferences
+        </button>
       </main>
     </div>
   );

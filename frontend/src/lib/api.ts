@@ -20,6 +20,15 @@ export type UserMe = {
   full_name: string | null;
 };
 
+export type UserPreferences = {
+  target_roles: string[];
+  locations: string[];
+  salary_min: number | null;
+  salary_max: number | null;
+  job_types: string[];
+  aggressiveness: number;
+};
+
 export function getBackendUrl(): string {
   return process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
 }
@@ -67,5 +76,30 @@ export async function getCurrentUser(token: string): Promise<UserMe> {
     cache: "no-store",
   });
   return parseJsonOrThrow<UserMe>(res);
+}
+
+export async function getMyPreferences(token: string): Promise<UserPreferences> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/users/me/preferences`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return parseJsonOrThrow<UserPreferences>(res);
+}
+
+export async function updateMyPreferences(
+  token: string,
+  payload: UserPreferences
+): Promise<UserPreferences> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/users/me/preferences`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  return parseJsonOrThrow<UserPreferences>(res);
 }
 

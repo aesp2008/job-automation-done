@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -40,6 +40,15 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 
+class UserPreferences(BaseModel):
+    target_roles: list[str] = []
+    locations: list[str] = []
+    salary_min: int | None = None
+    salary_max: int | None = None
+    job_types: list[str] = []
+    aggressiveness: int = 50
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(payload: UserRegisterRequest, db: Session = Depends(get_db)) -> User:
     existing = db.query(User).filter(User.email == payload.email).first()
@@ -71,4 +80,36 @@ def login_user(payload: UserLoginRequest, db: Session = Depends(get_db)) -> Toke
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.get("/me/preferences", response_model=UserPreferences)
+def get_my_preferences(current_user: User = Depends(get_current_user)) -> UserPreferences:
+    if not current_user.preferences:
+        return UserPreferences()
+    return UserPreferences(**current_user.preferences)
+
+
+@router.put("/me/preferences", response_model=UserPreferences)
+def update_my_preferences(
+    payload: UserPreferences,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UserPreferences:
+    current_user.preferences = payload.dict()
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return UserPreferences(**(current_user.preferences or {}))
+
+
+@router.post("/me/resume")
+def upload_resume(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    current_user.resume_path = f"uploads/{current_user.id}/{file.filename}"
+    db.add(current_user)
+    db.commit()
+    return {"message": "Resume metadata saved", "resume_path": current_user.resume_path}
 
