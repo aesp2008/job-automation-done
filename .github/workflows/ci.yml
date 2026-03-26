@@ -24,6 +24,9 @@ jobs:
       - name: Validate backend imports
         run: python -c "from backend.app.main import app; print('backend ok')"
 
+      - name: Run backend tests
+        run: pytest backend/tests -q
+
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest
@@ -49,4 +52,7 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+      - name: Run frontend tests
+        run: npm run test
 
