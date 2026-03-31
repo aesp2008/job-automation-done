@@ -72,7 +72,7 @@ export default function DashboardPage() {
   async function discoverAllBoards() {
     const token = localStorage.getItem("access_token");
     if (!token) return;
-    setBusy("Pulling jobs from all configured boards…");
+    setBusy("Syncing LinkedIn stub listing (preferences → role)…");
     await discoverProviderJobs(token);
     await refreshLists();
     setBusy("");
@@ -190,7 +190,7 @@ export default function DashboardPage() {
               onClick={discoverAllBoards}
               type="button"
             >
-              Discover all boards
+              Discover LinkedIn (stub)
             </button>
             <button
               className="rounded border border-amber-200 bg-amber-50 px-3 py-1 text-sm dark:border-amber-800 dark:bg-amber-950"
@@ -201,8 +201,8 @@ export default function DashboardPage() {
             </button>
           </div>
           <p className="mt-2 text-xs text-zinc-500">
-            Auto-apply only runs where a connector supports it. Failures and unsupported boards move to{" "}
-            <strong>manual required</strong> with the posting link.
+            LinkedIn-focused: discovery uses the LinkedIn provider (stub until OAuth/API). Auto-apply stays off; use{" "}
+            <strong>manual required</strong> and the posting link.
           </p>
           {matches.length ? (
             <ul className="mt-3 space-y-3 text-sm">

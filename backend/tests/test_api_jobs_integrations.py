@@ -35,15 +35,8 @@ def test_integrations_status_authenticated() -> None:
     assert res.status_code == 200
     body = res.json()
     assert isinstance(body, list)
-    assert len(body) >= 1
-    names = {item["provider"] for item in body}
-    assert "linkedin" in names
-    assert "glassdoor" in names
-    assert "rss_feed" in names
-    assert "greenhouse_api" in names
-    assert "lever_api" in names
-    assert "adzuna_api" in names
-    assert len(names) >= 13
+    assert len(body) == 1
+    assert body[0]["provider"] == "linkedin"
 
 
 def test_jobs_discover_fake_and_matches() -> None:
@@ -77,7 +70,7 @@ def test_discover_providers_and_auto_apply_manual_fallback() -> None:
 
     disc = client.post("/jobs/discover/providers", headers=headers)
     assert disc.status_code == 200
-    assert disc.json()["providers_touched"] >= 8
+    assert disc.json()["providers_touched"] == 1
 
     auto = client.post("/jobs/applications/auto-apply/run", headers=headers)
     assert auto.status_code == 200

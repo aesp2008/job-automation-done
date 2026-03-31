@@ -1,134 +1,79 @@
-# Job Automation MVP
+# Job Automation (LinkedIn-first)
 
-Monorepo for a job automation platform with:
-- `backend/` FastAPI API + Celery workers
-- `frontend/` Next.js (App Router, TypeScript) UI
-- `infrastructure/` Docker compose stack
-- `.github/workflows/` CI checks
+Monorepo for a **LinkedIn-focused** job workflow: preferences, resume parsing, JD-tailored drafts, application tracking, and a **stub** LinkedIn discovery path until real **LinkedIn Developer + OAuth + approved APIs** are wired in.
 
-## Current MVP scope
+Stack: **FastAPI** + **Celery**, **Next.js (App Router)**, Docker, GitHub Actions.
 
-- **Authentication:** register, login (Argon2), JWT, current-user profile
-- **User settings:** preferences CRUD; resume upload with **PDF / DOCX / text** parsing (skills, emails, preview)
-- **Jobs:** demo discovery, **multi-board stub discovery**, match scoring, applications with job title/URL
-- **Apply flow:** **auto-apply** where a connector supports it; otherwise **`manual_required`** with `status_detail`; **mark manual complete** when you applied on the site
-- **Resume tailoring:** JD-aware **skill order, bullets, summary**; download **`.txt`** or **`.docx`** draft
-- **Integrations:** stubs plus **modern read-only JSON**: **Greenhouse** public board API and **Lever** postings API (configure tokens in Connections), optional **Adzuna** aggregation via `ADZUNA_*` env keys; **RSS/Atom** still supported where feeds exist; data stored in `integration_connections` (except Adzuna, server env)
-- **Workers:** Celery tasks call the same discovery/auto-apply logic as the HTTP API
-- **Database:** Alembic migrations (run `python -m alembic -c backend/alembic.ini upgrade head` after pull)
-- **CI:** backend tests (isolated SQLite + migrations); frontend lint, build, tests
+## Important: what “LinkedIn-only” means
 
-## Repo structure
+- LinkedIn does **not** offer a public RSS/JSON URL for “my recommendations” like some ATS boards.
+- This repo deliberately registers **only** a `LinkedInProvider` for discovery. It returns **one demo listing** driven by your **target role** in Preferences so you can exercise matching, tailoring, and manual-apply UX.
+- **Next engineering step** for real data: [LinkedIn Developers](https://www.linkedin.com/developers/) app, OAuth 2.0, store tokens in `integration_connections`, call only APIs your app is approved for, comply with LinkedIn terms.
 
-```text
-backend/
-  app/
-    api/
-    core/
-    db/
-    integrations/
-    models/
-    services/
-    workers/
-frontend/
-  src/app/
-infrastructure/
-.github/workflows/
-```
+Other boards (Greenhouse, Lever, RSS, Adzuna, etc.) were **removed** to keep the product scope narrow.
 
-## Prerequisites
+## Current features
 
-- Python 3.10+
-- Node.js 22+
-- npm 10+
-- Docker Desktop (optional, for compose workflow)
+- Auth (Argon2), preferences, resume upload (PDF/DOCX/text) + parsing
+- **Discover LinkedIn (stub)** + optional **demo fake jobs** (local only)
+- Match scoring, applications with **manual apply** fallback, **tailored resume** `.txt` / `.docx`
+- Alembic migrations; CI runs backend + frontend checks
 
 ## Local development
 
-### 1) Install dependencies
-
-Backend:
+### 1) Dependencies
 
 ```bash
 python -m pip install -r backend/requirements.txt
+cd frontend && npm install && cd ..
 ```
 
-Frontend:
-
-```bash
-cd frontend
-npm install
-cd ..
-```
-
-### 2) Database migrations (local SQLite or Postgres)
-
-From the repo root:
+### 2) Migrations
 
 ```bash
 python -m alembic -c backend/alembic.ini upgrade head
 ```
 
-### 3) Run backend
+### 3) Backend & frontend
 
 ```bash
 python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+cd frontend && npm run dev
 ```
 
-### 4) Run frontend
+- App: `http://localhost:3000`
+- Health: `http://127.0.0.1:8000/health`
+
+### 4) Try the flow
+
+1. Register / log in  
+2. **Preferences** — set **target roles**, upload resume  
+3. **Dashboard** — **Discover LinkedIn (stub)**  
+4. Tailor resume / download drafts; use **manual apply** for real postings on linkedin.com when you implement OAuth
+
+## Tests
 
 ```bash
-cd frontend
-npm run dev
+python -m pytest backend/tests -q
+cd frontend && npm run lint && npm run test
 ```
 
-### Optional: Live job sources (recommended)
-
-1. **Greenhouse / Lever** — **Settings → Connections**: add board tokens (e.g. `stripe`) or Lever slugs (e.g. `shopify`), then **Discover all boards**. Uses public HTTPS JSON APIs ([Greenhouse Job Board API](https://developers.greenhouse.io/job-board.html), [Lever Postings](https://github.com/lever/postings-api)).
-2. **Adzuna** — register at [developer.adzuna.com](https://developer.adzuna.com), set `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, and optionally `ADZUNA_COUNTRY` (e.g. `gb`, `us`) in backend `.env`. Discovery runs a search from your profile **target role**.
-3. **RSS/Atom** — same Connections page; public `http`/`https` only (localhost blocked). Less common on large boards today.
-
-Open:
-- Frontend: `http://localhost:3000`
-- Backend health: `http://127.0.0.1:8000/health`
-
-## Docker development
-
-Use the compose stack with env file:
+## Docker
 
 ```bash
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/env.example up --build
 ```
 
-Services:
-- frontend on `localhost:3000`
-- backend on `localhost:8000`
-- postgres on `localhost:5432`
-- redis on `localhost:6379`
-- celery worker in same compose project
+## Repo layout
 
-## Running tests
-
-Backend:
-
-```bash
-python -m pytest backend/tests -q
+```text
+backend/app/   — FastAPI, models, workers, integrations (linkedin.py)
+frontend/      — Next.js App Router
+infrastructure/
+.github/workflows/
 ```
 
-Frontend:
+## Notes
 
-```bash
-cd frontend
-npm run test
-```
-
-## CI
-
-GitHub Actions workflow at `.github/workflows/ci.yml` runs:
-- backend dependency install + import validation + backend tests
-- frontend install + lint + build + frontend tests
-
-## Notes local
-
-- Uploaded resumes are stored under `uploads/` (gitignored).
-- Provider integrations are mostly **stubs** for flow testing; replace with real APIs and stored credentials when ready.
+- `uploads/` is gitignored.  
+- Old rows in `integration_connections` (e.g. from earlier RSS experiments) may still exist in your SQLite DB; they are ignored by discovery until you add LinkedIn OAuth storage.
