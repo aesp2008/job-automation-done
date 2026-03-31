@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getMyPreferences,
@@ -32,6 +32,8 @@ export default function PreferencesPage() {
     file_size_kb: number;
     extension: string;
     skills_detected: string[];
+    emails_found?: string[];
+    text_preview?: string;
     summary: string;
   } | null>(null);
 
@@ -41,7 +43,7 @@ export default function PreferencesPage() {
       router.replace("/");
       return;
     }
-    setToken(t);
+    startTransition(() => setToken(t));
     getMyPreferences(t)
       .then((data) => {
         setPrefs(data);
@@ -128,7 +130,18 @@ export default function PreferencesPage() {
                   ? resumeSummary.skills_detected.join(", ")
                   : "None detected"}
               </p>
-              <p>{resumeSummary.summary}</p>
+              {resumeSummary.emails_found?.length ? (
+                <p>
+                  <strong>Emails found:</strong>{" "}
+                  {resumeSummary.emails_found.join(", ")}
+                </p>
+              ) : null}
+              {resumeSummary.text_preview ? (
+                <p className="mt-2 whitespace-pre-wrap break-words text-xs text-zinc-500 dark:text-zinc-400">
+                  <strong>Text preview:</strong> {resumeSummary.text_preview}
+                </p>
+              ) : null}
+              <p className="mt-2">{resumeSummary.summary}</p>
             </div>
           ) : null}
         </form>

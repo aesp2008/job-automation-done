@@ -44,6 +44,24 @@ export type JobApplication = {
   job_id: number;
   status: string;
   provider: string;
+  status_detail?: string | null;
+  job_title?: string | null;
+  company?: string | null;
+  job_url?: string | null;
+};
+
+export type JobTailoring = {
+  job_title: string;
+  company: string;
+  jd_skills_highlighted: string[];
+  resume_skills_detected: string[];
+  skills_matched_with_jd: string[];
+  skills_gaps_vs_jd: string[];
+  skills_section_ordered: string[];
+  suggested_bullets: string[];
+  professional_summary: string;
+  full_text_draft: string;
+  resume_extraction_note?: string | null;
 };
 
 export type ProviderStatus = {
@@ -138,6 +156,8 @@ export async function uploadResume(
     file_size_kb: number;
     extension: string;
     skills_detected: string[];
+    emails_found?: string[];
+    text_preview?: string;
     summary: string;
   };
 }> {
@@ -157,6 +177,8 @@ export async function uploadResume(
       file_size_kb: number;
       extension: string;
       skills_detected: string[];
+      emails_found?: string[];
+      text_preview?: string;
       summary: string;
     };
   }>(res);
@@ -169,6 +191,76 @@ export async function discoverFakeJobs(token: string): Promise<{ created_jobs: n
     headers: { Authorization: `Bearer ${token}` },
   });
   return parseJsonOrThrow<{ created_jobs: number; total_fake_jobs: number }>(res);
+}
+
+export async function discoverProviderJobs(
+  token: string
+): Promise<{ created_jobs: number; providers_touched: number }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/discover/providers`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{ created_jobs: number; providers_touched: number }>(res);
+}
+
+export async function runAutoApply(token: string): Promise<{
+  auto_applied: number;
+  manual_required: number;
+  skipped_low_score: number;
+  message?: string;
+}> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/applications/auto-apply/run`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{
+    auto_applied: number;
+    manual_required: number;
+    skipped_low_score: number;
+    message?: string;
+  }>(res);
+}
+
+export async function markManualApplicationComplete(
+  token: string,
+  applicationId: number
+): Promise<{ id: number; status: string }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/applications/${applicationId}/manual-complete`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{ id: number; status: string }>(res);
+}
+
+export async function getJobTailoring(token: string, jobId: number): Promise<JobTailoring> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/${jobId}/tailoring`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return parseJsonOrThrow<JobTailoring>(res);
+}
+
+export async function downloadTailoredResumeFile(token: string, jobId: number): Promise<Blob> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/${jobId}/tailored-resume.txt`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = `Request failed (${res.status})`;
+    try {
+      const j = JSON.parse(text) as { detail?: string };
+      if (j.detail) detail = j.detail;
+    } catch {
+      /* use default */
+    }
+    throw new Error(detail);
+  }
+  return res.blob();
 }
 
 export async function getJobMatches(token: string): Promise<JobMatch[]> {

@@ -13,9 +13,8 @@ from backend.app.models.user import User
 
 settings = get_settings()
 
-# `bcrypt` is currently failing in the local environment; use sha256_crypt
-# for a reliable MVP password hash until we later harden/pin bcrypt.
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+# Argon2 for new passwords; sha256_crypt retained so existing dev DB users still log in.
+pwd_context = CryptContext(schemes=["argon2", "sha256_crypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 
@@ -24,6 +23,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
+    # First scheme in CryptContext is used (argon2).
     return pwd_context.hash(password)
 
 
