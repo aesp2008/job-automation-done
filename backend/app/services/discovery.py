@@ -19,19 +19,30 @@ def _user_profile(db: Session, user: User) -> dict:
         "aggressiveness": prefs.get("aggressiveness", 50),
     }
     rss_urls: list[str] = []
-    for row in (
-        db.query(IntegrationConnection)
-        .filter(
-            IntegrationConnection.user_id == user.id,
-            IntegrationConnection.provider == "rss_feed",
-        )
-        .all()
-    ):
+    greenhouse_tokens: list[str] = []
+    lever_companies: list[str] = []
+    for row in db.query(IntegrationConnection).filter(IntegrationConnection.user_id == user.id).all():
         cfg = row.config or {}
-        url = cfg.get("rss_url")
-        if isinstance(url, str) and url.strip():
-            rss_urls.append(url.strip())
+        if row.provider == "rss_feed":
+            url = cfg.get("rss_url")
+            if isinstance(url, str) and url.strip():
+                rss_urls.append(url.strip())
+        elif row.provider == "greenhouse_api":
+            bt = cfg.get("board_tokens")
+            if isinstance(bt, list):
+                greenhouse_tokens.extend(str(x).strip() for x in bt if x)
+            elif isinstance(cfg.get("board_token"), str):
+                greenhouse_tokens.append(cfg["board_token"].strip())
+        elif row.provider == "lever_api":
+            lc = cfg.get("companies")
+            if isinstance(lc, list):
+                lever_companies.extend(str(x).strip() for x in lc if x)
+            elif isinstance(cfg.get("company"), str):
+                lever_companies.append(cfg["company"].strip())
+
     profile["rss_feed_urls"] = rss_urls
+    profile["greenhouse_board_tokens"] = greenhouse_tokens[:15]
+    profile["lever_companies"] = lever_companies[:15]
     return profile
 
 

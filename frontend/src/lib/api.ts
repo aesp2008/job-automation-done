@@ -346,3 +346,53 @@ export async function deleteRssFeedConnection(token: string): Promise<{ ok: bool
   return parseJsonOrThrow<{ ok: boolean }>(res);
 }
 
+export async function putGreenhouseBoards(
+  token: string,
+  boardTokens: string[]
+): Promise<{ provider: string; board_tokens: string[] }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections/greenhouse`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ board_tokens: boardTokens }),
+  });
+  return parseJsonOrThrow<{ provider: string; board_tokens: string[] }>(res);
+}
+
+export async function deleteGreenhouseBoards(token: string): Promise<{ ok: boolean }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections/greenhouse`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{ ok: boolean }>(res);
+}
+
+export async function putLeverCompanies(
+  token: string,
+  companies: string[]
+): Promise<{ provider: string; companies: string[] }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections/lever`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ companies }),
+  });
+  return parseJsonOrThrow<{ provider: string; companies: string[] }>(res);
+}
+
+export async function deleteLeverCompanies(token: string): Promise<{ ok: boolean }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections/lever`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{ ok: boolean }>(res);
+}
+

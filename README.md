@@ -13,7 +13,7 @@ Monorepo for a job automation platform with:
 - **Jobs:** demo discovery, **multi-board stub discovery**, match scoring, applications with job title/URL
 - **Apply flow:** **auto-apply** where a connector supports it; otherwise **`manual_required`** with `status_detail`; **mark manual complete** when you applied on the site
 - **Resume tailoring:** JD-aware **skill order, bullets, summary**; download **`.txt`** or **`.docx`** draft
-- **Integrations:** status endpoint for many **stub** boards plus **user-configured RSS/Atom job feeds** (read-only fetch, stored in `integration_connections`); OAuth/API for major boards is future work
+- **Integrations:** stubs plus **modern read-only JSON**: **Greenhouse** public board API and **Lever** postings API (configure tokens in Connections), optional **Adzuna** aggregation via `ADZUNA_*` env keys; **RSS/Atom** still supported where feeds exist; data stored in `integration_connections` (except Adzuna, server env)
 - **Workers:** Celery tasks call the same discovery/auto-apply logic as the HTTP API
 - **Database:** Alembic migrations (run `python -m alembic -c backend/alembic.ini upgrade head` after pull)
 - **CI:** backend tests (isolated SQLite + migrations); frontend lint, build, tests
@@ -82,9 +82,11 @@ cd frontend
 npm run dev
 ```
 
-### Optional: RSS job feed
+### Optional: Live job sources (recommended)
 
-After login, open **Settings → Connections**, save a public **RSS or Atom** URL (`http`/`https` only; localhost blocked). On the dashboard, **Discover all boards** imports postings from that feed alongside stubs.
+1. **Greenhouse / Lever** — **Settings → Connections**: add board tokens (e.g. `stripe`) or Lever slugs (e.g. `shopify`), then **Discover all boards**. Uses public HTTPS JSON APIs ([Greenhouse Job Board API](https://developers.greenhouse.io/job-board.html), [Lever Postings](https://github.com/lever/postings-api)).
+2. **Adzuna** — register at [developer.adzuna.com](https://developer.adzuna.com), set `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, and optionally `ADZUNA_COUNTRY` (e.g. `gb`, `us`) in backend `.env`. Discovery runs a search from your profile **target role**.
+3. **RSS/Atom** — same Connections page; public `http`/`https` only (localhost blocked). Less common on large boards today.
 
 Open:
 - Frontend: `http://localhost:3000`

@@ -40,7 +40,10 @@ def test_integrations_status_authenticated() -> None:
     assert "linkedin" in names
     assert "glassdoor" in names
     assert "rss_feed" in names
-    assert len(names) >= 10
+    assert "greenhouse_api" in names
+    assert "lever_api" in names
+    assert "adzuna_api" in names
+    assert len(names) >= 13
 
 
 def test_jobs_discover_fake_and_matches() -> None:

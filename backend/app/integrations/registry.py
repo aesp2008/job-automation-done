@@ -1,7 +1,10 @@
+from backend.app.integrations.adzuna_api import AdzunaApiProvider
 from backend.app.integrations.careerbuilder import CareerBuilderProvider
 from backend.app.integrations.fake_board import FakeBoardProvider
+from backend.app.integrations.greenhouse_public import GreenhousePublicProvider
 from backend.app.integrations.glassdoor import GlassdoorProvider
 from backend.app.integrations.indeed import IndeedProvider
+from backend.app.integrations.lever_public import LeverPublicProvider
 from backend.app.integrations.linkedin import LinkedInProvider
 from backend.app.integrations.naukri import NaukriProvider
 from backend.app.integrations.rss_jobs import RssJobsProvider
@@ -24,4 +27,7 @@ def get_providers():
         CareerBuilderProvider(),
         WorkdayStubProvider(),
         RssJobsProvider(),
+        GreenhousePublicProvider(),
+        LeverPublicProvider(),
+        AdzunaApiProvider(),
     ]
