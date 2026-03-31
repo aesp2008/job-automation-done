@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
+
+from docx import Document
 
 from backend.app.services import resume_parser
 from backend.app.services.skill_lexicon import skills_from_known_lexicon
@@ -103,4 +106,44 @@ def build_tailoring_payload(
         "professional_summary": summary,
         "full_text_draft": full_text.strip(),
         "resume_extraction_note": resume_extraction_note,
+        "resume_excerpt": (resume_plain_text or "")[:12_000],
     }
+
+
+def tailoring_payload_to_docx_bytes(payload: dict) -> bytes:
+    """Build a minimal .docx users can edit in Word from the tailoring payload."""
+    doc = Document()
+    doc.add_heading(f"Tailored draft — {payload['job_title']}", level=0)
+    doc.add_paragraph(payload["company"])
+    doc.add_heading("Professional summary", level=1)
+    doc.add_paragraph(payload["professional_summary"])
+
+    doc.add_heading("Skills (JD-relevant order)", level=1)
+    doc.add_paragraph(", ".join(payload["skills_section_ordered"]) or "—")
+
+    doc.add_heading("JD alignment", level=1)
+    matched = payload["skills_matched_with_jd"]
+    gaps = payload["skills_gaps_vs_jd"]
+    doc.add_paragraph(
+        "Matched: " + (", ".join(matched) if matched else "None listed."),
+    )
+    doc.add_paragraph(
+        "Gaps to address: " + (", ".join(gaps) if gaps else "None listed."),
+    )
+
+    doc.add_heading("Suggested bullets (edit with your metrics)", level=1)
+    for b in payload["suggested_bullets"]:
+        doc.add_paragraph(b, style="List Bullet")
+
+    if payload.get("resume_extraction_note"):
+        doc.add_heading("Note on uploaded file", level=1)
+        doc.add_paragraph(str(payload["resume_extraction_note"]))
+
+    excerpt = (payload.get("resume_excerpt") or "").strip()
+    if excerpt:
+        doc.add_heading("Your resume text (excerpt)", level=1)
+        doc.add_paragraph(excerpt)
+
+    buf = BytesIO()
+    doc.save(buf)
+    return buf.getvalue()

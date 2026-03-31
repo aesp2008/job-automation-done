@@ -8,23 +8,15 @@ Monorepo for a job automation platform with:
 
 ## Current MVP scope
 
-- Authentication:
-  - register, login, current-user profile
-- User settings:
-  - preferences create/update/get
-  - resume upload to local disk with parsed summary (keyword-based MVP parser)
-- Jobs:
-  - fake discovery endpoint
-  - match scoring via centralized matching service
-  - applications list
-- Integrations:
-  - provider status endpoint for LinkedIn, Unstop, Indeed (stub implementations)
-- Workers and scheduling:
-  - Celery tasks for discover and auto-apply skeleton flows
-  - APScheduler service skeleton for periodic discovery
-- CI:
-  - backend import + tests
-  - frontend lint + build + tests
+- **Authentication:** register, login (Argon2), JWT, current-user profile
+- **User settings:** preferences CRUD; resume upload with **PDF / DOCX / text** parsing (skills, emails, preview)
+- **Jobs:** demo discovery, **multi-board stub discovery**, match scoring, applications with job title/URL
+- **Apply flow:** **auto-apply** where a connector supports it; otherwise **`manual_required`** with `status_detail`; **mark manual complete** when you applied on the site
+- **Resume tailoring:** JD-aware **skill order, bullets, summary**; download **`.txt`** or **`.docx`** draft
+- **Integrations:** status endpoint for many **stub** boards (LinkedIn, Indeed, Glassdoor, Naukri, Workday ATS stub with simulated failure, etc.); real OAuth/API is future work
+- **Workers:** Celery tasks call the same discovery/auto-apply logic as the HTTP API
+- **Database:** Alembic migrations (run `python -m alembic -c backend/alembic.ini upgrade head` after pull)
+- **CI:** backend tests (isolated SQLite + migrations); frontend lint, build, tests
 
 ## Repo structure
 
@@ -69,13 +61,21 @@ npm install
 cd ..
 ```
 
-### 2) Run backend
+### 2) Database migrations (local SQLite or Postgres)
+
+From the repo root:
+
+```bash
+python -m alembic -c backend/alembic.ini upgrade head
+```
+
+### 3) Run backend
 
 ```bash
 python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### 3) Run frontend
+### 4) Run frontend
 
 ```bash
 cd frontend
@@ -122,7 +122,7 @@ GitHub Actions workflow at `.github/workflows/ci.yml` runs:
 - backend dependency install + import validation + backend tests
 - frontend install + lint + build + frontend tests
 
-## Notes
+## Notes local
 
-- Local uploaded resume files are stored under `uploads/` and ignored by git.
-- Current provider integrations are stubs; real session/OAuth automation is planned next.
+- Uploaded resumes are stored under `uploads/` (gitignored).
+- Provider integrations are mostly **stubs** for flow testing; replace with real APIs and stored credentials when ready.

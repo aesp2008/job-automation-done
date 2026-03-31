@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,11 @@ from backend.app.models.user import User
 from backend.app.services.auto_apply import run_auto_apply_for_user
 from backend.app.services.discovery import run_provider_discovery
 from backend.app.services.matching import score_job_for_user
-from backend.app.services.resume_tailoring import build_tailoring_payload, load_user_resume_plain_text
+from backend.app.services.resume_tailoring import (
+    build_tailoring_payload,
+    load_user_resume_plain_text,
+    tailoring_payload_to_docx_bytes,
+)
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -252,5 +256,35 @@ def download_tailored_resume_text(
     return PlainTextResponse(
         body,
         media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{job_id}/tailored-resume.docx")
+def download_tailored_resume_docx(
+    job_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    text, note = load_user_resume_plain_text(current_user.resume_path)
+    if note and not text.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=note)
+
+    payload = build_tailoring_payload(
+        text,
+        job_title=job.title,
+        company=job.company,
+        jd_description=job.description or "",
+        resume_extraction_note=note,
+    )
+    blob = tailoring_payload_to_docx_bytes(payload)
+    filename = f"tailored-resume-{job_id}.docx"
+    return Response(
+        content=blob,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

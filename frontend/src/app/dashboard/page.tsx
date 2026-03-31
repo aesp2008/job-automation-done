@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   discoverFakeJobs,
   discoverProviderJobs,
+  downloadTailoredResumeDocx,
   downloadTailoredResumeFile,
   getApplications,
   getCurrentUser,
@@ -120,6 +121,24 @@ export default function DashboardPage() {
     setBusy("");
   }
 
+  async function saveTailoredDocx(jobId: number) {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    setBusy("Downloading .docx draft…");
+    try {
+      const blob = await downloadTailoredResumeDocx(token, jobId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tailored-resume-${jobId}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Download failed");
+    }
+    setBusy("");
+  }
+
   async function confirmManualDone(app: JobApplication) {
     const token = localStorage.getItem("access_token");
     if (!token) return;
@@ -210,6 +229,13 @@ export default function DashboardPage() {
                       onClick={() => saveTailoredFile(m.id)}
                     >
                       Download tailored .txt
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded border px-2 py-1 text-xs"
+                      onClick={() => saveTailoredDocx(m.id)}
+                    >
+                      Download tailored .docx
                     </button>
                   </div>
                   {tailoringByJobId[m.id] ? (

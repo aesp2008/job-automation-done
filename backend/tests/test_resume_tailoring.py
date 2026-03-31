@@ -1,4 +1,7 @@
-from backend.app.services.resume_tailoring import build_tailoring_payload
+from backend.app.services.resume_tailoring import (
+    build_tailoring_payload,
+    tailoring_payload_to_docx_bytes,
+)
 
 
 def test_tailoring_orders_skills_and_matches_jd() -> None:
@@ -14,3 +17,14 @@ def test_tailoring_orders_skills_and_matches_jd() -> None:
     assert "aws" in out["skills_gaps_vs_jd"]
     assert out["skills_section_ordered"][0] in out["jd_skills_highlighted"]
     assert "Platform Engineer" in out["full_text_draft"]
+
+
+def test_tailoring_docx_is_valid_zip() -> None:
+    out = build_tailoring_payload(
+        "Python developer.",
+        job_title="Engineer",
+        company="Co",
+        jd_description="Need Python.",
+    )
+    raw = tailoring_payload_to_docx_bytes(out)
+    assert raw[:2] == b"PK"

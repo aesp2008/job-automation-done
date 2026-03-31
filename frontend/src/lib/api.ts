@@ -61,6 +61,7 @@ export type JobTailoring = {
   suggested_bullets: string[];
   professional_summary: string;
   full_text_draft: string;
+  resume_excerpt?: string;
   resume_extraction_note?: string | null;
 };
 
@@ -247,6 +248,25 @@ export async function getJobTailoring(token: string, jobId: number): Promise<Job
 export async function downloadTailoredResumeFile(token: string, jobId: number): Promise<Blob> {
   const backendUrl = getBackendUrl();
   const res = await fetch(`${backendUrl}/jobs/${jobId}/tailored-resume.txt`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = `Request failed (${res.status})`;
+    try {
+      const j = JSON.parse(text) as { detail?: string };
+      if (j.detail) detail = j.detail;
+    } catch {
+      /* use default */
+    }
+    throw new Error(detail);
+  }
+  return res.blob();
+}
+
+export async function downloadTailoredResumeDocx(token: string, jobId: number): Promise<Blob> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/jobs/${jobId}/tailored-resume.docx`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
