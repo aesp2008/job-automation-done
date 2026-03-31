@@ -4,6 +4,7 @@ from backend.app.integrations.glassdoor import GlassdoorProvider
 from backend.app.integrations.indeed import IndeedProvider
 from backend.app.integrations.linkedin import LinkedInProvider
 from backend.app.integrations.naukri import NaukriProvider
+from backend.app.integrations.rss_jobs import RssJobsProvider
 from backend.app.integrations.unstop import UnstopProvider
 from backend.app.integrations.wellfound import WellfoundProvider
 from backend.app.integrations.workday_stub import WorkdayStubProvider
@@ -22,4 +23,5 @@ def get_providers():
         WellfoundProvider(),
         CareerBuilderProvider(),
         WorkdayStubProvider(),
+        RssJobsProvider(),
     ]

@@ -310,3 +310,39 @@ export async function getProviderStatuses(token: string): Promise<ProviderStatus
   return parseJsonOrThrow<ProviderStatus[]>(res);
 }
 
+export type IntegrationConnection = {
+  provider: string;
+  config: Record<string, unknown>;
+};
+
+export async function getIntegrationConnections(token: string): Promise<IntegrationConnection[]> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return parseJsonOrThrow<IntegrationConnection[]>(res);
+}
+
+export async function putRssFeedConnection(token: string, rssUrl: string): Promise<{ provider: string; rss_url: string }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections/rss_feed`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ rss_url: rssUrl }),
+  });
+  return parseJsonOrThrow<{ provider: string; rss_url: string }>(res);
+}
+
+export async function deleteRssFeedConnection(token: string): Promise<{ ok: boolean }> {
+  const backendUrl = getBackendUrl();
+  const res = await fetch(`${backendUrl}/integrations/connections/rss_feed`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return parseJsonOrThrow<{ ok: boolean }>(res);
+}
+

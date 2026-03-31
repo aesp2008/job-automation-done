@@ -13,7 +13,7 @@ Monorepo for a job automation platform with:
 - **Jobs:** demo discovery, **multi-board stub discovery**, match scoring, applications with job title/URL
 - **Apply flow:** **auto-apply** where a connector supports it; otherwise **`manual_required`** with `status_detail`; **mark manual complete** when you applied on the site
 - **Resume tailoring:** JD-aware **skill order, bullets, summary**; download **`.txt`** or **`.docx`** draft
-- **Integrations:** status endpoint for many **stub** boards (LinkedIn, Indeed, Glassdoor, Naukri, Workday ATS stub with simulated failure, etc.); real OAuth/API is future work
+- **Integrations:** status endpoint for many **stub** boards plus **user-configured RSS/Atom job feeds** (read-only fetch, stored in `integration_connections`); OAuth/API for major boards is future work
 - **Workers:** Celery tasks call the same discovery/auto-apply logic as the HTTP API
 - **Database:** Alembic migrations (run `python -m alembic -c backend/alembic.ini upgrade head` after pull)
 - **CI:** backend tests (isolated SQLite + migrations); frontend lint, build, tests
@@ -81,6 +81,10 @@ python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 cd frontend
 npm run dev
 ```
+
+### Optional: RSS job feed
+
+After login, open **Settings → Connections**, save a public **RSS or Atom** URL (`http`/`https` only; localhost blocked). On the dashboard, **Discover all boards** imports postings from that feed alongside stubs.
 
 Open:
 - Frontend: `http://localhost:3000`

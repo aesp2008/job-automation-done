@@ -25,7 +25,12 @@ def get_db():
 
 def init_db() -> None:
     # Import models to ensure metadata is available for fallback behavior.
-    from backend.app.models import application, job, user  # noqa: F401
+    from backend.app.models import (  # noqa: F401
+        application,
+        integration_connection,
+        job,
+        user,
+    )
 
     alembic_ini = Path(__file__).resolve().parents[2] / "alembic.ini"
     alembic_cfg = Config(str(alembic_ini))

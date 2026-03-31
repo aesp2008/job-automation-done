@@ -39,7 +39,8 @@ def test_integrations_status_authenticated() -> None:
     names = {item["provider"] for item in body}
     assert "linkedin" in names
     assert "glassdoor" in names
-    assert len(names) >= 8
+    assert "rss_feed" in names
+    assert len(names) >= 10
 
 
 def test_jobs_discover_fake_and_matches() -> None:

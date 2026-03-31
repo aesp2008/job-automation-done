@@ -4,24 +4,40 @@ from sqlalchemy.orm import Session
 
 from backend.app.integrations.registry import get_providers
 from backend.app.models.application import JobApplication
+from backend.app.models.integration_connection import IntegrationConnection
 from backend.app.models.job import Job
 from backend.app.models.user import User
 from backend.app.services.matching import score_job_for_user
 
 
-def _user_profile(user: User) -> dict:
+def _user_profile(db: Session, user: User) -> dict:
     prefs = user.preferences or {}
-    return {
+    profile: dict = {
         "target_roles": prefs.get("target_roles", []),
         "locations": prefs.get("locations", []),
         "job_types": prefs.get("job_types", []),
         "aggressiveness": prefs.get("aggressiveness", 50),
     }
+    rss_urls: list[str] = []
+    for row in (
+        db.query(IntegrationConnection)
+        .filter(
+            IntegrationConnection.user_id == user.id,
+            IntegrationConnection.provider == "rss_feed",
+        )
+        .all()
+    ):
+        cfg = row.config or {}
+        url = cfg.get("rss_url")
+        if isinstance(url, str) and url.strip():
+            rss_urls.append(url.strip())
+    profile["rss_feed_urls"] = rss_urls
+    return profile
 
 
 def run_provider_discovery(db: Session, user: User) -> dict[str, int]:
     """Pull jobs from all providers; upsert Job rows and ensure JobApplication per user."""
-    profile = _user_profile(user)
+    profile = _user_profile(db, user)
     created_jobs = 0
     for provider in get_providers():
         for item in provider.search_jobs(profile):
